@@ -40,9 +40,12 @@ public:
      * @param index - a string column name to be used as a primary key. If not explicitly set, a primary key will be generated.
      * @param op
      */
-    Table(std::shared_ptr<t_pool> pool, std::vector<std::string> column_names,
-        std::vector<t_dtype> data_types, std::uint32_t limit,
-        std::string index);
+    Table(
+        std::shared_ptr<t_pool> pool,
+        const std::vector<std::string>& column_names,
+        const std::vector<t_dtype>& data_types,
+        std::uint32_t limit,
+        const std::string& index);
 
     /**
      * @brief Register the given `t_data_table` with the underlying pool and gnode, thus
