@@ -67,7 +67,9 @@ Table::get_schema() const {
 }
 
 void
-Table::add_computed_columns(std::shared_ptr<t_data_table> data_table, std::vector<t_computed_column_def> computed_lambdas) {
+Table::add_computed_columns(
+    std::shared_ptr<t_data_table> data_table,
+    std::vector<t_computed_column_lambda> computed_lambdas) {
     PSP_VERBOSE_ASSERT(m_init, "touching uninited object");
     t_uindex prev_gnode_id = m_gnode->get_id();
     

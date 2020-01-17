@@ -938,7 +938,46 @@ namespace binding {
         std::string output_column_name = computed_def["column"].as<std::string>();
         t_val type = computed_def["type"];
         t_val computed_func = computed_def["func"];
+
+        if (has_value(computed_def["func_name"])) {
+            // Only run for +
+            std::vector<std::string> operators{"+"};
+            std::string op = computed_def["func_name"].as<std::string>();
+            if (std::find(operators.begin(), operators.end(), op) != operators.end()) {
+                std::vector<t_dtype> input_types;
+                std::vector<std::shared_ptr<t_column>> table_columns;
+                std::vector<std::shared_ptr<t_column>> flattened_columns;
+                for (const auto& column_name : input_column_names) {
+                    auto table_column = table->get_column(column_name);
+                    table_columns.push_back(table_column);
+                    input_types.push_back(table_column->get_dtype());
+                    flattened_columns.push_back(flattened->get_column(column_name));
+                }
+
+                // This uses the `t_computed_method` enum, not string name
+                t_computation computation = t_computed_column::get_computation(t_computation_method::ADD, input_types);
+                t_dtype output_column_type = computation.m_return_type;
+
+                // don't double create output column
+                auto schema = flattened->get_schema();
+                std::shared_ptr<t_column> output_column;
+                if (schema.has_column(output_column_name)) {
+                    output_column = flattened->get_column(output_column_name);
+                } else {
+                    output_column = flattened->add_column_sptr(output_column_name, output_column_type, true);
+                }
+
+                t_computed_column::apply_computation(
+                    table_columns,
+                    flattened_columns,
+                    output_column,
+                    row_indices,
+                    computation);
+                return;
+            }
+        }
         
+        // original path
         std::string typestring;
 
         if (type.isUndefined()) {
@@ -1035,9 +1074,9 @@ namespace binding {
     }
 
     template <>
-    std::vector<t_computed_column_def>
+    std::vector<t_computed_column_lambda>
     make_computed_lambdas(std::vector<t_val> computed) {
-        std::vector<t_computed_column_def> converted;
+        std::vector<t_computed_column_lambda> converted;
         for (const auto& j_computed_def : computed) {
             converted.push_back(
                 [j_computed_def](std::shared_ptr<t_data_table> table, std::shared_ptr<t_data_table> flattened, const std::vector<t_rlookup>& row_indices) {
@@ -1881,6 +1920,7 @@ EMSCRIPTEN_BINDINGS(perspective) {
         .field("columns_changed", &t_stepdelta::columns_changed)
         .field("cells", &t_stepdelta::cells);
 
+
     /******************************************************************************
      *
      * vector
@@ -1941,6 +1981,41 @@ EMSCRIPTEN_BINDINGS(perspective) {
         .value("OP_INSERT", OP_INSERT)
         .value("OP_DELETE", OP_DELETE)
         .value("OP_CLEAR", OP_CLEAR);
+
+    /******************************************************************************
+     *
+     * t_computation_method
+     */
+    enum_<t_computation_method>("t_computation_method")
+        .value("ADD", ADD)
+        .value("SUBTRACT", SUBTRACT)
+        .value("MULTIPLY", MULTIPLY)
+        .value("DIVIDE", DIVIDE)
+        .value("INVERT", INVERT)
+        .value("SQRT", SQRT)
+        .value("ABS", ABS)
+        .value("PERCENT_A_OF_B", PERCENT_A_OF_B)
+        .value("UPPERCASE", UPPERCASE)
+        .value("LOWERCASE", LOWERCASE)
+        .value("LENGTH", LENGTH)
+        .value("CONCAT_SPACE", CONCAT_SPACE)
+        .value("CONCAT_COMMA", CONCAT_COMMA)
+        .value("BUCKET_10", BUCKET_10)
+        .value("BUCKET_100", BUCKET_100)
+        .value("BUCKET_1000", BUCKET_1000)
+        .value("BUCKET_0_1", BUCKET_0_1)
+        .value("BUCKET_0_0_1", BUCKET_0_0_1)
+        .value("BUCKET_0_0_0_1", BUCKET_0_0_0_1)
+        .value("HOUR_OF_DAY", HOUR_OF_DAY)
+        .value("DAY_OF_WEEK", DAY_OF_WEEK)
+        .value("MONTH_OF_YEAR", MONTH_OF_YEAR)
+        .value("SECOND_BUCKET", SECOND_BUCKET)
+        .value("MINUTE_BUCKET", MINUTE_BUCKET)
+        .value("HOUR_BUCKET", HOUR_BUCKET)
+        .value("DAY_BUCKET", DAY_BUCKET)
+        .value("WEEK_BUCKET", WEEK_BUCKET)
+        .value("MONTH_BUCKET", MONTH_BUCKET)
+        .value("YEAR_BUCKET", YEAR_BUCKET);
 
     /******************************************************************************
      *

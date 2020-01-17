@@ -180,10 +180,10 @@ namespace binding {
      * 
      * @tparam T 
      * @param computed 
-     * @return std::vector<t_computed_column_def> 
+     * @return std::vector<t_computed_column_lambda> 
      */
     template <typename T>
-    std::vector<t_computed_column_def> make_computed_lambdas(std::vector<T> computed);
+    std::vector<t_computed_column_lambda> make_computed_lambdas(std::vector<T> computed);
 
     /**
      * @brief Utility function for accessing columns and adding data.
