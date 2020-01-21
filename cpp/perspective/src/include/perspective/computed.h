@@ -17,6 +17,7 @@
 #include <perspective/column.h>
 #include <perspective/scalar.h>
 #include <perspective/rlookup.h>
+#include <perspective/computed_method.h>
 
 namespace perspective {
 
@@ -119,10 +120,11 @@ public:
         const std::vector<t_rlookup>& row_indices,
         const t_computation& computation);
 
+    /*
     template <typename V, typename T = V, typename U = V>
     static V add(T x, U y) {
         return static_cast<V>(static_cast<T>(x) + static_cast<U>(y));
-    };
+    };*/
 
     template <typename V, typename T = V, typename U = V>
     static V subtract(T x, U y) {

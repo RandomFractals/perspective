@@ -937,7 +937,6 @@ namespace binding {
         std::vector<std::string> input_column_names = vecFromArray<t_val, std::string>(input_names);
         std::string output_column_name = computed_def["column"].as<std::string>();
         t_val type = computed_def["type"];
-        t_val computed_func = computed_def["func"];
 
         if (has_value(computed_def["func_name"])) {
             // Only run for +
@@ -978,6 +977,7 @@ namespace binding {
         }
         
         // original path
+        t_val computed_func = computed_def["func"];
         std::string typestring;
 
         if (type.isUndefined()) {

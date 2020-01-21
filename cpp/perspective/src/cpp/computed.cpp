@@ -68,36 +68,17 @@ t_computed_column::apply_computation(
             }
             args.push_back(t);
         }
-
-        switch (computation.m_return_type) {
-            case DTYPE_INT64: {
-                output_column->set_nth(
-                    idx, t_computed_column::add<t_dtype_to_type<DTYPE_INT64>::type>(
-                        args[0].get<t_dtype_to_type<DTYPE_INT64>::type>(), args[1].get<t_dtype_to_type<DTYPE_INT64>::type>()), STATUS_VALID);        
-            } break;
-            case DTYPE_FLOAT64: {
-                switch (computation.input_type_1) {
-                    case DTYPE_INT32: {
-                        // FIXME: finish
-                        output_column->set_nth(
-                            idx, t_computed_column::add<t_dtype_to_type<DTYPE_FLOAT64>::type, t_dtype_to_type<DTYPE_INT32>::type>(
-                                args[0].get<t_dtype_to_type<DTYPE_FLOAT64>::type>(), args[1].get<t_dtype_to_type<DTYPE_FLOAT64>::type>()), STATUS_VALID);
-                    } break;
-                    case DTYPE_INT64: {
-                        output_column->set_nth(
-                            idx, t_computed_column::add<t_dtype_to_type<DTYPE_FLOAT64>::type>(
-                                args[0].get<t_dtype_to_type<DTYPE_FLOAT64>::type>(), args[1].get<t_dtype_to_type<DTYPE_FLOAT64>::type>()), STATUS_VALID); 
-                    }
-                }
-                       
+        
+        switch (computation.m_name) {
+            case ADD: {
+                output_column->set_scalar(idx, 
+                    computed_method::add(args[0], args[1]));
             } break;
             default: {
-                break;
+                PSP_COMPLAIN_AND_ABORT("Invalid computation method");
             }
         }
     }
-
-    output_column->pprint();
 }
 
 std::vector<t_computation> t_computed_column::computations = {
@@ -106,9 +87,13 @@ std::vector<t_computation> t_computed_column::computations = {
     t_computation{DTYPE_INT32, DTYPE_INT64, DTYPE_INT64, ADD},
     t_computation{DTYPE_INT64, DTYPE_INT32, DTYPE_INT64, ADD},
     t_computation{DTYPE_FLOAT32, DTYPE_INT32, DTYPE_FLOAT64, ADD},
+    t_computation{DTYPE_FLOAT32, DTYPE_INT64, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_INT32, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
+    t_computation{DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_FLOAT64, DTYPE_INT32, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_INT32, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
+    t_computation{DTYPE_FLOAT64, DTYPE_INT64, DTYPE_FLOAT64, ADD},
+    t_computation{DTYPE_INT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_FLOAT32, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_FLOAT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
 };
