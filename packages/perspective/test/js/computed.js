@@ -19,6 +19,14 @@ const int_float_data = [
     {w: 3.5, x: 3, y: "c", z: true},
     {w: 4.5, x: 4, y: "d", z: false}
 ];
+
+const int_float_subtract_data = [
+    {u: 2.5, v: 2, w: 1.5, x: 1, y: "a", z: true},
+    {u: 3.5, v: 3, w: 2.5, x: 2, y: "b", z: false},
+    {u: 4.5, v: 4, w: 3.5, x: 3, y: "c", z: true},
+    {u: 5.5, v: 5, w: 4.5, x: 4, y: "d", z: false}
+];
+
 module.exports = perspective => {
     describe("computed columns", function() {
         describe("constructors", function() {
@@ -85,7 +93,7 @@ module.exports = perspective => {
                 let table2 = table.add_computed([
                     {
                         column: "sum",
-                        type: "float",
+                        type: "int",
                         func_name: "+",
                         func: (w, x) => w + x,
                         inputs: ["x", "x"]
@@ -134,6 +142,66 @@ module.exports = perspective => {
                 let view = table2.view({columns: ["sum"], aggregates: {sum: "count"}});
                 let result = await view.to_json();
                 expect(result).toEqual([{sum: 2.5}, {sum: 4.5}, {sum: 6.5}, {sum: 8.5}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, subtract ints", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "difference",
+                        type: "int",
+                        func_name: "-",
+                        func: (w, x) => w - x,
+                        inputs: ["v", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["difference"], aggregates: {difference: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{difference: 1}, {difference: 1}, {difference: 1}, {difference: 1}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, subtract floats", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "difference",
+                        type: "float",
+                        func_name: "-",
+                        func: (w, x) => w - x,
+                        inputs: ["u", "w"]
+                    }
+                ]);
+                let view = table2.view({columns: ["difference"], aggregates: {difference: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{difference: 1}, {difference: 1}, {difference: 1}, {difference: 1}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, subtract mixed", async function() {
+                var table = perspective.table(int_float_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "difference",
+                        type: "float",
+                        func_name: "-",
+                        func: (w, x) => w - x,
+                        inputs: ["w", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["difference"], aggregates: {difference: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{difference: 0.5}, {difference: 0.5}, {difference: 0.5}, {difference: 0.5}]);
                 view.delete();
                 table2.delete();
                 table.delete();
@@ -308,6 +376,43 @@ module.exports = perspective => {
                     {__ROW_PATH__: [6.25], int: 4, "int+float": 6.25, float: 2.25, string: 1, datetime: 1, __INDEX__: [0]},
                     {__ROW_PATH__: [7.75], int: 3, "int+float": 7.75, float: 4.75, string: 1, datetime: 1, __INDEX__: [2]},
                     {__ROW_PATH__: [9.25], int: 4, "int+float": 9.25, float: 5.25, string: 1, datetime: 1, __INDEX__: [3]}
+                ]);
+            });
+
+            it("should update on dependent columns, subtract", async function() {
+                const table = perspective
+                    .table([
+                        {int: 1, float: 2.25, string: "a", datetime: new Date()},
+                        {int: 2, float: 3.5, string: "b", datetime: new Date()},
+                        {int: 3, float: 4.75, string: "c", datetime: new Date()},
+                        {int: 4, float: 5.25, string: "d", datetime: new Date()}
+                    ])
+                    .add_computed([
+                        {
+                            column: "int-float",
+                            func_name: "-",
+                            type: "float",
+                            func: (w, x) => w - x,
+                            inputs: ["int", "float"]
+                        }
+                    ]);
+
+                let view = table.view({
+                    row_pivots: ["int-float"]
+                });
+
+                table.update([{int: 4, __INDEX__: 0}]);
+
+                let json = await view.to_json({
+                    index: true
+                });
+
+                expect(json).toEqual([
+                    {__ROW_PATH__: [], int: 13, "int-float": -2.75, float: 15.75, string: 4, datetime: 4, __INDEX__: [0, 3, 1, 2]},
+                    {__ROW_PATH__: [-1.75], int: 3, "int-float": -1.75, float: 4.75, string: 1, datetime: 1, __INDEX__: [2]},
+                    {__ROW_PATH__: [-1.5], int: 2, "int-float": -1.5, float: 3.5, string: 1, datetime: 1, __INDEX__: [1]},
+                    {__ROW_PATH__: [-1.25], int: 4, "int-float": -1.25, float: 5.25, string: 1, datetime: 1, __INDEX__: [3]},
+                    {__ROW_PATH__: [1.75], int: 4, "int-float": 1.75, float: 2.25, string: 1, datetime: 1, __INDEX__: [0]}
                 ]);
             });
         });

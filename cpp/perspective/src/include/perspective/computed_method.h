@@ -18,6 +18,7 @@
 namespace perspective {
 namespace computed_method {
 
+// Add
 template <t_dtype T>
 t_tscalar add_helper(t_tscalar x, t_tscalar y);
 
@@ -52,6 +53,43 @@ template <>
 t_tscalar add_helper<DTYPE_FLOAT32>(t_tscalar x, t_tscalar y);
 
 t_tscalar add(t_tscalar x, t_tscalar y);
+
+// Subtract
+
+template <t_dtype T>
+t_tscalar subtract_helper(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_INT64>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_INT32>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_INT16>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_INT8>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_UINT64>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_UINT32>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_UINT16>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_UINT8>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_FLOAT64>(t_tscalar x, t_tscalar y);
+
+template <>
+t_tscalar subtract_helper<DTYPE_FLOAT32>(t_tscalar x, t_tscalar y);
+
+t_tscalar subtract(t_tscalar x, t_tscalar y);
 
 } // end namespace computed_method
 } // end namespace perspective

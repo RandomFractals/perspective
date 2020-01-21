@@ -23,7 +23,7 @@ t_computed_column_def::t_computed_column_def(
 
 t_computation
 t_computed_column::get_computation(
-    t_computation_method name, const std::vector<t_dtype>& input_types) {
+    t_computation_method_name name, const std::vector<t_dtype>& input_types) {
     for (const t_computation& computation : t_computed_column::computations) {
         if (computation.m_name == name && computation.m_input_type_1 == input_types[0] && computation.m_input_type_2 == input_types[1]) {
             return computation;
@@ -68,19 +68,26 @@ t_computed_column::apply_computation(
             }
             args.push_back(t);
         }
-        
+
         switch (computation.m_name) {
             case ADD: {
                 output_column->set_scalar(idx, 
                     computed_method::add(args[0], args[1]));
+            } break;
+            case SUBTRACT: {
+                output_column->set_scalar(idx, 
+                    computed_method::subtract(args[0], args[1]));
             } break;
             default: {
                 PSP_COMPLAIN_AND_ABORT("Invalid computation method");
             }
         }
     }
+
+    output_column->pprint();
 }
 
+// TODO: need to add int8/16 and unsigned int
 std::vector<t_computation> t_computed_column::computations = {
     t_computation{DTYPE_INT32, DTYPE_INT32, DTYPE_INT64, ADD},
     t_computation{DTYPE_INT64, DTYPE_INT64, DTYPE_INT64, ADD},
@@ -96,6 +103,20 @@ std::vector<t_computation> t_computed_column::computations = {
     t_computation{DTYPE_INT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_FLOAT32, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
     t_computation{DTYPE_FLOAT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
+    t_computation{DTYPE_INT32, DTYPE_INT32, DTYPE_INT64, SUBTRACT},
+    t_computation{DTYPE_INT64, DTYPE_INT64, DTYPE_INT64, SUBTRACT},
+    t_computation{DTYPE_INT32, DTYPE_INT64, DTYPE_INT64, SUBTRACT},
+    t_computation{DTYPE_INT64, DTYPE_INT32, DTYPE_INT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT32, DTYPE_INT32, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT32, DTYPE_INT64, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_INT32, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT64, DTYPE_INT32, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_INT32, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT64, DTYPE_INT64, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_INT64, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT32, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
+    t_computation{DTYPE_FLOAT64, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
 };
 
 } // end namespace perspective
