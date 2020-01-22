@@ -35,22 +35,21 @@
     <script>
         window.addEventListener('WebComponentsReady', function() {
             const elem = document.getElementById("viewer");
-            fetch("date32.arrow").then((response) => {
+            elem.load([
+                {u: 2.5, v: 2, w: 1.5, x: 1, y: "a", z: true},
+                {u: 3.5, v: 3, w: 2.5, x: 2, y: "b", z: false},
+                {u: 4.5, v: 4, w: 3.5, x: 3, y: "c", z: true},
+                {u: 5.5, v: 5, w: 4.5, x: 4, y: "d", z: false}
+            ]);
+            /*
+            fetch("all_numeric_types.arrow").then((response) => {
                 if (!response.ok) {
                     throw new Error("Error: status " + status);
                 }
 
                 const date32 = response.arrayBuffer();
                 date32.then(buffer => elem.load(buffer));
-            })
-            fetch("date64.arrow").then((response) => {
-                if (!response.ok) {
-                    throw new Error("Error: status " + status);
-                }
-
-                const date64 = response.arrayBuffer();
-                date64.then(buffer => elem.update(buffer));
-            })
+            });*/
         });
     </script>
 

@@ -170,6 +170,8 @@ public:
             return x + ", " + y;
     }
 
+    static void make_computations();
+
     static std::vector<t_computation> computations;
 };
 

@@ -45,10 +45,6 @@ t_computed_column::apply_computation(
     }
     auto arity = table_columns.size();
 
-    for (auto c : table_columns) {
-        std::cout << get_dtype_descr(c->get_dtype()) << std::endl;
-    }
-
     for (t_uindex idx = 0; idx < end; ++idx) {
         // iterate through row indices OR through all rows
         t_uindex ridx = idx;
@@ -66,57 +62,68 @@ t_computed_column::apply_computation(
                     break;
                 }
             }
+
             args.push_back(t);
         }
 
+
+        if (args[0].is_none() || args[1].is_none()) {
+            output_column->set_scalar(idx, mknone());
+            output_column->set_valid(idx, false);
+            continue;
+        }
+
+        t_tscalar rval;
+
         switch (computation.m_name) {
             case ADD: {
-                output_column->set_scalar(idx, 
-                    computed_method::add(args[0], args[1]));
+                rval = computed_method::add(args[0], args[1]);
             } break;
             case SUBTRACT: {
-                output_column->set_scalar(idx, 
-                    computed_method::subtract(args[0], args[1]));
+                rval = computed_method::subtract(args[0], args[1]);
+            } break;
+            case MULTIPLY: {
+                rval = computed_method::multiply(args[0], args[1]);
+            } break;
+            case DIVIDE: {
+                rval = computed_method::divide(args[0], args[1]);
             } break;
             default: {
                 PSP_COMPLAIN_AND_ABORT("Invalid computation method");
             }
+        }
+
+        output_column->set_scalar(idx, rval);
+
+        if (rval.is_none()) {
+            output_column->set_valid(idx, false);
         }
     }
 
     output_column->pprint();
 }
 
-// TODO: need to add int8/16 and unsigned int
-std::vector<t_computation> t_computed_column::computations = {
-    t_computation{DTYPE_INT32, DTYPE_INT32, DTYPE_INT64, ADD},
-    t_computation{DTYPE_INT64, DTYPE_INT64, DTYPE_INT64, ADD},
-    t_computation{DTYPE_INT32, DTYPE_INT64, DTYPE_INT64, ADD},
-    t_computation{DTYPE_INT64, DTYPE_INT32, DTYPE_INT64, ADD},
-    t_computation{DTYPE_FLOAT32, DTYPE_INT32, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_FLOAT32, DTYPE_INT64, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_INT32, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_FLOAT64, DTYPE_INT32, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_INT32, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_FLOAT64, DTYPE_INT64, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_INT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_FLOAT32, DTYPE_FLOAT32, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_FLOAT64, DTYPE_FLOAT64, DTYPE_FLOAT64, ADD},
-    t_computation{DTYPE_INT32, DTYPE_INT32, DTYPE_INT64, SUBTRACT},
-    t_computation{DTYPE_INT64, DTYPE_INT64, DTYPE_INT64, SUBTRACT},
-    t_computation{DTYPE_INT32, DTYPE_INT64, DTYPE_INT64, SUBTRACT},
-    t_computation{DTYPE_INT64, DTYPE_INT32, DTYPE_INT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT32, DTYPE_INT32, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT32, DTYPE_INT64, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_INT32, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_INT64, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT64, DTYPE_INT32, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_INT32, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT64, DTYPE_INT64, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_INT64, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT32, DTYPE_FLOAT32, DTYPE_FLOAT64, SUBTRACT},
-    t_computation{DTYPE_FLOAT64, DTYPE_FLOAT64, DTYPE_FLOAT64, SUBTRACT},
-};
+std::vector<t_computation> t_computed_column::computations = {};
+
+void t_computed_column::make_computations() {
+    std::vector<t_dtype> dtypes = {DTYPE_FLOAT64, DTYPE_FLOAT32, DTYPE_INT64, DTYPE_INT32, DTYPE_INT16, DTYPE_INT8, DTYPE_UINT64, DTYPE_UINT32, DTYPE_UINT16, DTYPE_UINT8};
+    std::vector<t_computation_method_name> methods = {ADD, SUBTRACT, MULTIPLY, DIVIDE};
+
+    for (const auto method : methods) {
+        for (auto i = 0; i < dtypes.size(); ++i) {
+            for (auto j = 0; j < dtypes.size(); ++j) {
+                t_dtype return_type = DTYPE_INT64;
+
+                if (is_floating_point(dtypes[i]) || is_floating_point(dtypes[j])) {
+                    return_type = DTYPE_FLOAT64;
+                };
+
+                t_computed_column::computations.push_back(
+                    t_computation{dtypes[i], dtypes[j], return_type, method}
+                );
+            }
+        }
+    }
+}
 
 } // end namespace perspective

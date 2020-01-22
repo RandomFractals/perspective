@@ -947,40 +947,48 @@ namespace binding {
         if (has_value(computed_def["func_name"])) {
             t_computation_method_name method = 
                 computed_def["func_name"].as<t_computation_method_name>();
-            if (method == ADD || method == SUBTRACT) {
-                std::vector<t_dtype> input_types;
-                std::vector<std::shared_ptr<t_column>> table_columns;
-                std::vector<std::shared_ptr<t_column>> flattened_columns;
-                for (const auto& column_name : input_column_names) {
-                    auto table_column = table->get_column(column_name);
-                    table_columns.push_back(table_column);
-                    input_types.push_back(table_column->get_dtype());
-                    flattened_columns.push_back(
-                        flattened->get_column(column_name));
+            switch (method) {
+                case ADD:
+                case SUBTRACT:
+                case MULTIPLY:
+                case DIVIDE: {
+                    std::vector<t_dtype> input_types;
+                    std::vector<std::shared_ptr<t_column>> table_columns;
+                    std::vector<std::shared_ptr<t_column>> flattened_columns;
+                    for (const auto& column_name : input_column_names) {
+                        auto table_column = table->get_column(column_name);
+                        table_columns.push_back(table_column);
+                        input_types.push_back(table_column->get_dtype());
+                        flattened_columns.push_back(
+                            flattened->get_column(column_name));
+                    }
+
+                    // This uses the `t_computed_method` enum, not string name
+                    t_computation computation = t_computed_column::get_computation(
+                        method, input_types);
+                    t_dtype output_column_type = computation.m_return_type;
+
+                    // don't double create output column
+                    auto schema = flattened->get_schema();
+                    std::shared_ptr<t_column> output_column;
+                    if (schema.has_column(output_column_name)) {
+                        output_column = flattened->get_column(output_column_name);
+                    } else {
+                        output_column = flattened->add_column_sptr(
+                            output_column_name, output_column_type, true);
+                    }
+
+                    t_computed_column::apply_computation(
+                        table_columns,
+                        flattened_columns,
+                        output_column,
+                        row_indices,
+                        computation);
+                    return;
+                } break;
+                default: {
+                    break;
                 }
-
-                // This uses the `t_computed_method` enum, not string name
-                t_computation computation = t_computed_column::get_computation(
-                    method, input_types);
-                t_dtype output_column_type = computation.m_return_type;
-
-                // don't double create output column
-                auto schema = flattened->get_schema();
-                std::shared_ptr<t_column> output_column;
-                if (schema.has_column(output_column_name)) {
-                    output_column = flattened->get_column(output_column_name);
-                } else {
-                    output_column = flattened->add_column_sptr(
-                        output_column_name, output_column_type, true);
-                }
-
-                t_computed_column::apply_computation(
-                    table_columns,
-                    flattened_columns,
-                    output_column,
-                    row_indices,
-                    computation);
-                return;
             }
         }
         
@@ -1650,7 +1658,10 @@ using namespace perspective::binding;
  */
 int
 main(int argc, char** argv) {
-     // clang-format off
+// seed the computations vector
+t_computed_column::make_computations();
+
+// clang-format off
 EM_ASM({
 
     if (typeof self !== "undefined") {

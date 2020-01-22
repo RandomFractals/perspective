@@ -207,6 +207,120 @@ module.exports = perspective => {
                 table.delete();
             });
 
+            it("Computed column of arity 2, multiply ints", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "multiply",
+                        type: "float",
+                        func_name: "*",
+                        inputs: ["v", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["multiply"], aggregates: {multiply: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{multiply: 2}, {multiply: 6}, {multiply: 12}, {multiply: 20}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, multiply floats", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "multiply",
+                        type: "float",
+                        func_name: "*",
+                        inputs: ["u", "w"]
+                    }
+                ]);
+                let view = table2.view({columns: ["multiply"], aggregates: {multiply: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{multiply: 3.75}, {multiply: 8.75}, {multiply: 15.75}, {multiply: 24.75}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, multiply mixed", async function() {
+                var table = perspective.table(int_float_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "multiply",
+                        type: "float",
+                        func_name: "*",
+                        inputs: ["w", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["multiply"], aggregates: {multiply: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{multiply: 1.5}, {multiply: 5}, {multiply: 10.5}, {multiply: 18}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, divide ints", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "divide",
+                        type: "int",
+                        func_name: "/",
+                        inputs: ["v", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["divide"], aggregates: {divide: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{divide: 2}, {divide: 1.5}, {divide: 1.33}, {divide: 1.25}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, divide floats", async function() {
+                var table = perspective.table(int_float_subtract_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "divide",
+                        type: "int",
+                        func_name: "/",
+                        inputs: ["u", "w"]
+                    }
+                ]);
+                let view = table2.view({columns: ["divide"], aggregates: {divide: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{divide: 1.6666666666666667}, {divide: 1.4}, {divide: 1.2857142857142858}, {divide: 1.2222222222222223}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
+            it("Computed column of arity 2, divide mixed", async function() {
+                var table = perspective.table(int_float_data);
+
+                let table2 = table.add_computed([
+                    {
+                        column: "divide",
+                        type: "int",
+                        func_name: "/",
+                        inputs: ["w", "x"]
+                    }
+                ]);
+                let view = table2.view({columns: ["divide"], aggregates: {divide: "count"}});
+                let result = await view.to_json();
+                expect(result).toEqual([{divide: 1.5}, {divide: 1.25}, {divide: 1.1666666666666667}, {divide: 1.125}]);
+                view.delete();
+                table2.delete();
+                table.delete();
+            });
+
             it("Computed column of arity 2 with updates on non-dependent columns, construct from schema", async function() {
                 var meta = {
                     w: "float",
