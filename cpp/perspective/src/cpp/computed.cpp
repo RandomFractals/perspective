@@ -114,7 +114,7 @@ void t_computed_column::make_computations() {
             for (auto j = 0; j < dtypes.size(); ++j) {
                 t_dtype return_type = DTYPE_INT64;
 
-                if (is_floating_point(dtypes[i]) || is_floating_point(dtypes[j])) {
+                if (method == DIVIDE || (is_floating_point(dtypes[i]) || is_floating_point(dtypes[j]))) {
                     return_type = DTYPE_FLOAT64;
                 };
 

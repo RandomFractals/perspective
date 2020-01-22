@@ -277,7 +277,7 @@ module.exports = perspective => {
                 ]);
                 let view = table2.view({columns: ["divide"], aggregates: {divide: "count"}});
                 let result = await view.to_json();
-                expect(result).toEqual([{divide: 2}, {divide: 1.5}, {divide: 1.33}, {divide: 1.25}]);
+                expect(result).toEqual([{divide: 2}, {divide: 1.5}, {divide: 1.3333333333333333}, {divide: 1.25}]);
                 view.delete();
                 table2.delete();
                 table.delete();
@@ -469,7 +469,6 @@ module.exports = perspective => {
                             column: "int+float",
                             func_name: "+",
                             type: "float",
-                            func: (w, x) => w + x,
                             inputs: ["int", "float"]
                         }
                     ]);
@@ -506,7 +505,6 @@ module.exports = perspective => {
                             column: "int-float",
                             func_name: "-",
                             type: "float",
-                            func: (w, x) => w - x,
                             inputs: ["int", "float"]
                         }
                     ]);
@@ -527,6 +525,78 @@ module.exports = perspective => {
                     {__ROW_PATH__: [-1.5], int: 2, "int-float": -1.5, float: 3.5, string: 1, datetime: 1, __INDEX__: [1]},
                     {__ROW_PATH__: [-1.25], int: 4, "int-float": -1.25, float: 5.25, string: 1, datetime: 1, __INDEX__: [3]},
                     {__ROW_PATH__: [1.75], int: 4, "int-float": 1.75, float: 2.25, string: 1, datetime: 1, __INDEX__: [0]}
+                ]);
+            });
+
+            it("should update on dependent columns, multiply", async function() {
+                const table = perspective
+                    .table([
+                        {int: 1, float: 2.25, string: "a", datetime: new Date()},
+                        {int: 2, float: 3.5, string: "b", datetime: new Date()},
+                        {int: 3, float: 4.75, string: "c", datetime: new Date()},
+                        {int: 4, float: 5.25, string: "d", datetime: new Date()}
+                    ])
+                    .add_computed([
+                        {
+                            column: "int * float",
+                            func_name: "*",
+                            type: "float",
+                            inputs: ["int", "float"]
+                        }
+                    ]);
+
+                let view = table.view({
+                    row_pivots: ["int * float"]
+                });
+
+                table.update([{int: 4, __INDEX__: 0}]);
+
+                let json = await view.to_json({
+                    index: true
+                });
+
+                expect(json).toEqual([
+                    {__ROW_PATH__: [], int: 13, "int * float": 51.25, float: 15.75, string: 4, datetime: 4, __INDEX__: [0, 3, 2, 1]},
+                    {__ROW_PATH__: [7], int: 2, "int * float": 7, float: 3.5, string: 1, datetime: 1, __INDEX__: [1]},
+                    {__ROW_PATH__: [9], int: 4, "int * float": 9, float: 2.25, string: 1, datetime: 1, __INDEX__: [0]},
+                    {__ROW_PATH__: [14.25], int: 3, "int * float": 14.25, float: 4.75, string: 1, datetime: 1, __INDEX__: [2]},
+                    {__ROW_PATH__: [21], int: 4, "int * float": 21, float: 5.25, string: 1, datetime: 1, __INDEX__: [3]}
+                ]);
+            });
+
+            it("should update on dependent columns, divide", async function() {
+                const table = perspective
+                    .table([
+                        {int: 1, float: 2.25, string: "a", datetime: new Date()},
+                        {int: 2, float: 3.5, string: "b", datetime: new Date()},
+                        {int: 3, float: 4.75, string: "c", datetime: new Date()},
+                        {int: 4, float: 5.25, string: "d", datetime: new Date()}
+                    ])
+                    .add_computed([
+                        {
+                            column: "int / float",
+                            func_name: "/",
+                            type: "float",
+                            inputs: ["int", "float"]
+                        }
+                    ]);
+
+                let view = table.view({
+                    row_pivots: ["int / float"]
+                });
+
+                table.update([{int: 4, __INDEX__: 0}]);
+
+                let json = await view.to_json({
+                    index: true
+                });
+
+                expect(json).toEqual([
+                    {__ROW_PATH__: [], int: 13, "int / float": 3.742690058479532, float: 15.75, string: 4, datetime: 4, __INDEX__: [0, 3, 2, 1]},
+                    {__ROW_PATH__: [0.5714285714285714], int: 2, "int / float": 0.5714285714285714, float: 3.5, string: 1, datetime: 1, __INDEX__: [1]},
+                    {__ROW_PATH__: [0.631578947368421], int: 3, "int / float": 0.631578947368421, float: 4.75, string: 1, datetime: 1, __INDEX__: [2]},
+                    {__ROW_PATH__: [0.7619047619047619], int: 4, "int / float": 0.7619047619047619, float: 5.25, string: 1, datetime: 1, __INDEX__: [3]},
+                    {__ROW_PATH__: [1.7777777777777777], int: 4, "int / float": 1.7777777777777777, float: 2.25, string: 1, datetime: 1, __INDEX__: [0]}
                 ]);
             });
         });

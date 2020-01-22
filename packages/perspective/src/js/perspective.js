@@ -1440,8 +1440,6 @@ export default function(Module) {
     table.prototype.add_computed = function(computed) {
         let _Table;
 
-        console.log(computed);
-
         for (let c of computed) {
             if (c["func_name"]) {
                 c["func_name"] = name_to_computation(c["func_name"]);
